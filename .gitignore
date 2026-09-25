@@ -1,0 +1,66 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+__MACOSX/
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Challenge Datasets (files exceed GitHub 100MB limit, total >2.5GB)
+dataset/
+student_resource/dataset/
+*.tsv.gz
+*.zip
+
+# Generated Output / Submission TSVs (exceed GitHub 100MB limit)
+output/
+student_resource/output/
+
+# Model Checkpoints / Cache
+cache/
+student_resource/cache/
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.onnx
+*.bin
