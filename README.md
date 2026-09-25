@@ -94,7 +94,6 @@ MLChallenge2026/
     │           ├── evaluate.py               # Macro F0.5 metric & singleton scoring
     │           ├── fast_pipeline.py          # Optimized partition execution routines
     │           └── run_pipeline.py           # Production CLI orchestrator
-    ├── scratch/                              # Diagnostic & exploration benchmarks
     └── utils/
         └── validate_submission.py            # Official submission format validator
 ```

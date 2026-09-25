@@ -64,3 +64,8 @@ student_resource/cache/
 *.pth
 *.onnx
 *.bin
+
+# Experimental scratch scripts
+scratch/
+student_resource/scratch/
+
