@@ -41,10 +41,12 @@ code/business_entity_resolution/
 ├── requirements.txt               # Pinned Python dependencies
 └── src/
     ├── preprocess.py              # Text cleaning, normalization, token extraction
-    ├── blocking.py                # Multi-pass inverted index candidate retrieval
-    ├── features.py                # Pairwise RapidFuzz feature extraction
-    ├── model.py                   # LightGBM training & prediction
-    ├── evaluate.py                # Macro F0.5 evaluation metric with singleton logic
+    ├── blocking_v4.py             # Multi-pass high-recall compound index blocker
+    ├── features_v4.py             # 43-dim RapidFuzz, residual raw-name, and Indic features
+    ├── fast_pipeline_v4.py        # High-throughput parallel inference pipeline
+    ├── fast_pipeline_v5_france.py # Dedicated French commune precision pipeline
+    ├── calibrate_submission_v4_1.py# Country-aware calibrated match capping
+    ├── train_v4.py                # LightGBM training on balanced multi-country pairs
     └── run_pipeline.py            # End-to-end streaming orchestrator
 ```
 
@@ -67,13 +69,14 @@ To train on a fast sample (30,000 S1 entities) and evaluate validation performan
 python src/run_pipeline.py --data-dir ../../../dataset --output-dir ../../../output --cache-dir ../../../cache --val-only
 ```
 
-### 2. Full Production End-to-End Pipeline
-To run the complete pipeline, perform country-by-country inference on all 1,732,544 test entities, and generate the final submission files:
+### 2. Full Production End-to-End Pipeline (0.908 LB Reproduction)
+To run the complete production pipeline, perform country-calibrated inference on all 1,732,544 test entities, and generate the final 0.908 submission files:
 ```bash
-python src/run_pipeline.py --data-dir ../../../dataset --output-dir ../../../output --cache-dir ../../../cache
+python src/pipeline.py --data-dir ../../../dataset --output-dir ../../../output --cache-dir ../../../cache --workers 8
 ```
 
 Output files produced:
-- `output/matching_results.tsv`: Final predictions (`source1_entity_id\tmatched_entity_ids`)
-- `output/candidate_pairs.tsv`: Blocking candidate set (`source1_entity_id\tcandidate_entity_ids`)
-- `cache/lgbm_model.pkl`: Trained model artifact and calibrated decision threshold.
+- `output/matching_results.tsv`: Official competition prediction file (0.908 Leaderboard SOTA)
+- `output/candidate_pairs.tsv`: Complete blocking candidate set
+- `output/partitions/`: Clean intermediate country partitions (France, India, US)
+- `cache/lgbm_model_v4.pkl`: 43-feature LightGBM model checkpoint.
