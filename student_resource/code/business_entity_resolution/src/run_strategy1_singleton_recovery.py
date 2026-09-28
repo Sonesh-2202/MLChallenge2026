@@ -42,9 +42,9 @@ from features_v4 import (
 from features_v9 import get_idf_dict
 from features_v10 import (
     compute_pair_features_v10, FEATURE_COLS_V10,
-    extract_leading_number, extract_us_state, extract_fr_dept
+    extract_leading_number, extract_us_state, extract_fr_dept,
+    extract_street_tokens, street_names_compatible
 )
-from run_v10_pipeline import extract_street_tokens, street_names_compatible
 
 def main():
     t_start = time.time()

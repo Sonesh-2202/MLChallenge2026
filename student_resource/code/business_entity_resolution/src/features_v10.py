@@ -72,6 +72,27 @@ def extract_fr_dept(addr):
     m = FR_ZIP_RE.search(addr)
     return m.group(1) if m else None
 
+FR_STREET_STOPWORDS = {
+    'rue', 'avenue', 'av', 'boulevard', 'blvd', 'chemin', 'route', 'impasse',
+    'place', 'allee', 'cours', 'passage', 'quai', 'voie', 'square', 'rond-point',
+    'residence', 'batiment', 'france', 'cedex'
+}
+
+def extract_street_tokens(addr):
+    if not addr or addr == 'nan':
+        return None
+    tokens = [w for w in re.findall(r'[a-zA-Z\u00C0-\u017F]+', addr.lower()) if len(w) >= 3 and w not in FR_STREET_STOPWORDS]
+    return set(tokens) if tokens else None
+
+def street_names_compatible(st1, st2):
+    if not st1 or not st2:
+        return True
+    if st1 & st2:
+        return True
+    s1_str = ' '.join(sorted(st1))
+    s2_str = ' '.join(sorted(st2))
+    return JaroWinkler.similarity(s1_str, s2_str) >= 0.85
+
 def compute_idf_cosine(tokens1, tokens2, idf_dict, default_idf=4.0):
     if not tokens1 or not tokens2:
         return 0.0
