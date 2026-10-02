@@ -37,22 +37,29 @@ The pipeline deduplicates and resolves reference business records (`Source 1`) a
 ## Directory Structure
 ```
 code/business_entity_resolution/
-├── README.md                      # Pipeline guide & documentation
-├── requirements.txt               # Pinned Python dependencies
+├── README.md                          # End-to-end reproduction instructions
+├── requirements.txt                   # Pinned dependency environment
 └── src/
-    ├── preprocess.py              # Text cleaning, normalization, token extraction
-    ├── blocking_v4.py             # Multi-pass high-recall compound index blocker
-    ├── features_v4.py             # 43-dim RapidFuzz, residual raw-name, and Indic features
-    ├── fast_pipeline_v4.py        # High-throughput parallel inference pipeline
-    ├── fast_pipeline_v5_france.py # Dedicated French commune precision pipeline
-    ├── calibrate_submission_v4_1.py# Country-aware calibrated match capping
-    ├── train_v4.py                # LightGBM training on balanced multi-country pairs
-    └── run_pipeline.py            # End-to-end streaming orchestrator
+    ├── preprocess.py                  # Text normalization, NFKD decomposition, legal suffix & address parsing
+    ├── blocking_v4.py                 # Multi-pass high-recall compound inverted index blocker
+    ├── features_v4.py                 # 43-dim RapidFuzz, residual raw-name, and Indic script features
+    ├── features_v9.py                 # 16-dim token IDF distinctiveness, Roman numerals, and legal form features
+    ├── features_v10.py                # 67-dim feature suite (IDF cosines, US state & FR dept guardrails, 4-grams)
+    ├── model.py                       # LightGBM training & prediction wrapper utilities
+    ├── train_v10.py                   # High-precision LightGBM training script (67 features)
+    ├── train_v13_xgboost.py           # Complementary XGBoost histogram booster training
+    ├── evaluate.py                    # Competition Macro F0.5 evaluation engine
+    ├── run_strategy1_singleton_recovery.py # V11 production singleton rescue engine (0 duplicates)
+    ├── run_v12_multimatch_recovery.py # Multi-match cluster expansion pass
+    ├── run_v13_ensemble_pipeline.py   # Dual-model ensemble pipeline orchestrator
+    └── pipeline.py                    # Unified CLI production entrypoint
 ```
 
 ---
 
 ## Installation & Setup
+
+Ensure Python 3.9+ is installed, then install all pinned dependencies:
 
 ```bash
 cd code/business_entity_resolution
@@ -61,22 +68,30 @@ pip install -r requirements.txt
 
 ---
 
-## Running the Pipeline
+## End-to-End Pipeline Reproduction
 
-### 1. Quick Validation Run
-To train on a fast sample (30,000 S1 entities) and evaluate validation performance:
+### 1. Training the Model (Optional / From Scratch)
+To fit the token IDF dictionary and train the 67-feature LightGBM booster on the training dataset:
 ```bash
-python src/run_pipeline.py --data-dir ../../../dataset --output-dir ../../../output --cache-dir ../../../cache --val-only
+python src/train_v10.py --data-dir ../../../dataset --cache-dir ../../../cache --out-model ../../../cache/lgbm_model_v10.pkl
 ```
 
-### 2. Full Production End-to-End Pipeline (0.908 LB Reproduction)
-To run the complete production pipeline, perform country-calibrated inference on all 1,732,544 test entities, and generate the final 0.908 submission files:
+### 2. Full Test Inference & Singleton Rescue (Best Submission Generation)
+To run the production pipeline that generates the verified submission outputs:
 ```bash
 python src/pipeline.py --data-dir ../../../dataset --output-dir ../../../output --cache-dir ../../../cache --workers 8
 ```
 
-Output files produced:
-- `output/matching_results.tsv`: Official competition prediction file (0.908 Leaderboard SOTA)
-- `output/candidate_pairs.tsv`: Complete blocking candidate set
-- `output/partitions/`: Clean intermediate country partitions (France, India, US)
-- `cache/lgbm_model_v4.pkl`: 43-feature LightGBM model checkpoint.
+### 3. Submission Format & Constraint Verification
+Verify that generated files satisfy all competition requirements (singletons, no duplicates, valid IDs):
+```bash
+python ../../utils/validate_submission.py \
+    --matching ../../output/matching_results.tsv \
+    --candidate ../../output/candidate_pairs.tsv \
+    --test-dir ../../dataset/test
+```
+
+### Output Files Generated:
+- `output/matching_results.tsv`: Final matches identical to the leaderboard submission (SHA-256: `E50732AA548A3DDCD561830D18733B2BB6EAF088D62F8828F8B56FE0642E9CC0`).
+- `output/candidate_pairs.tsv`: Complete candidate pairs generated during the blocking stage (1,732,544 rows).
+
